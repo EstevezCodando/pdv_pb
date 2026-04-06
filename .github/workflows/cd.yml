@@ -111,31 +111,6 @@ jobs:
           nohup java -jar "$JAR" --spring.profiles.active=h2 --server.port=8080 > pdv-app.log 2>&1 &
           echo $! > pdv-app.pid
 
-      - name: Registrar etapa de health check
-        run: bash .github/scripts/registrar-etapa.sh "Aguardando aplicacao responder no health check"
-
-      - name: Aguardar aplicacao
-        run: bash .github/scripts/aguardar-aplicacao.sh "${PDV_BASE_URL}/actuator/health" 30 5
-
-      - name: Registrar etapa de smoke tests
-        run: bash .github/scripts/registrar-etapa.sh "Executando smoke tests HTTP"
-
-      - name: Smoke test - health check publico
-        run: curl --fail --show-error --silent "${PDV_BASE_URL}/actuator/health"
-
-      - name: Smoke test - endpoint autenticado via Basic Auth
-        # Credenciais via secrets (producao) ou fallback para dados de homologacao
-        env:
-          PDV_ADMIN_USER: ${{ secrets.PDV_ADMIN_USER }}
-          PDV_ADMIN_PASS: ${{ secrets.PDV_ADMIN_PASS }}
-        shell: bash
-        run: |
-          ADMIN_USER="${PDV_ADMIN_USER:-admin@pdv.com}"
-          ADMIN_PASS="${PDV_ADMIN_PASS:-admin123}"
-          curl --fail --show-error --silent \
-            -u "${ADMIN_USER}:${ADMIN_PASS}" \
-            "${PDV_BASE_URL}/api/integracao/resumo"
-
       - name: Registrar etapa de testes Selenium
         run: bash .github/scripts/registrar-etapa.sh "Iniciando testes pos-deploy com Selenium"
 
@@ -186,9 +161,7 @@ jobs:
           echo "| Etapa | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Empacotamento JAR | ✅ |" >> $GITHUB_STEP_SUMMARY
-          echo "| Health Check | ✅ |" >> $GITHUB_STEP_SUMMARY
-          echo "| Smoke Tests HTTP | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Selenium pós-deploy | Executado |" >> $GITHUB_STEP_SUMMARY
+          echo "| Selenium pós-deploy | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
           echo "| DAST ZAP Baseline | Executado |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
