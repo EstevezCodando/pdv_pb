@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(titulo='Produtos', conteudo=~{::section})}">
+<body>
+<section>
+    <!-- Mensagens de feedback -->
+    <div th:if="${mensagemSucesso}" class="alert alert-success alert-dismissible fade show" role="alert" id="alertSucesso">
+        <i class="bi bi-check-circle me-2"></i>
+        <span th:text="${mensagemSucesso}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${mensagemErro}" class="alert alert-danger alert-dismissible fade show" role="alert" id="alertErro">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span th:text="${mensagemErro}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center py-3"
+             style="background: var(--pdv-secondary);">
+            <h4 class="mb-0 text-white">
+                <i class="bi bi-box-seam me-2"></i>Produtos Cadastrados
+            </h4>
+            <a th:href="@{/produtos/novo}" class="btn btn-pdv" id="btnNovo">
+                <i class="bi bi-plus-lg me-1"></i>Novo Produto
+            </a>
+        </div>
+        <div class="card-body p-0">
+            <div th:if="${#lists.isEmpty(produtos)}" class="text-center text-muted py-5" id="semRegistros">
+                <i class="bi bi-inbox display-4 d-block mb-3"></i>
+                Nenhum produto cadastrado.
+            </div>
+            <div th:unless="${#lists.isEmpty(produtos)}" class="table-responsive">
+                <table class="table table-hover mb-0" id="tabelaProdutos">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Preco (R$)</th>
+                        <th>Estoque</th>
+                        <th>Cod. Barras</th>
+                        <th>Status</th>
+                        <th class="text-center">Acoes</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="p : ${produtos}" th:id="'produto-' + ${p.id}">
+                        <td th:text="${p.id}"></td>
+                        <td th:text="${p.nome}"></td>
+                        <td th:text="${#numbers.formatDecimal(p.preco, 1, 2)}"></td>
+                        <td th:text="${p.quantidadeEstoque}"></td>
+                        <td th:text="${p.codigoBarras ?: '---'}"></td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${p.ativo} ? 'badge-ativo' : 'badge-inativo'"
+                                  th:text="${p.ativo} ? 'Ativo' : 'Inativo'"></span>
+                        </td>
+                        <td class="text-center">
+                            <a th:href="@{/produtos/editar/{id}(id=${p.id})}"
+                               class="btn btn-sm btn-outline-primary me-1 btn-editar"
+                               th:title="'Editar ' + ${p.nome}">
+                                <i class="bi bi-pencil"></i> Editar
+                            </a>
+                            <a th:href="@{/produtos/excluir/{id}(id=${p.id})}"
+                               class="btn btn-sm btn-outline-danger btn-excluir"
+                               th:title="'Excluir ' + ${p.nome}">
+                                <i class="bi bi-trash"></i> Excluir
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

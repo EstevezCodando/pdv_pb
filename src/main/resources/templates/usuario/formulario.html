@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(titulo=${acao + ' Usuario'}, conteudo=~{::section})}">
+<body>
+<section>
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header py-3" style="background: var(--pdv-secondary);">
+                    <h4 class="mb-0 text-white">
+                        <i class="bi bi-person-plus me-2" th:if="${acao == 'Cadastrar'}"></i>
+                        <i class="bi bi-person-gear me-2" th:if="${acao == 'Atualizar'}"></i>
+                        <span th:text="${acao + ' Usuario'}"></span>
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+
+                    <!-- Mensagem de erro de negocio -->
+                    <div th:if="${mensagemErro}" class="alert alert-danger" role="alert" id="alertErroForm">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <span th:text="${mensagemErro}"></span>
+                    </div>
+
+                    <form th:action="${usuario.id != null} ? @{/usuarios/atualizar/{id}(id=${usuario.id})} : @{/usuarios/salvar}"
+                          th:object="${usuario}" method="post" id="formUsuario" novalidate="novalidate">
+
+                        <!-- Nome -->
+                        <div class="mb-3">
+                            <label for="nome" class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nome" th:field="*{nome}"
+                                   th:classappend="${#fields.hasErrors('nome')} ? 'is-invalid'"
+                                   placeholder="Nome completo" required="required"/>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}">Erro nome</div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label fw-semibold">E-mail <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" th:field="*{email}"
+                                   th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'"
+                                   placeholder="usuario@email.com" required="required"/>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Erro email</div>
+                        </div>
+
+                        <!-- Senha -->
+                        <div class="mb-3">
+                            <label for="senha" class="form-label fw-semibold">Senha <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="senha" th:field="*{senha}"
+                                   th:classappend="${#fields.hasErrors('senha')} ? 'is-invalid'"
+                                   placeholder="Minimo 4 caracteres" required="required"/>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('senha')}" th:errors="*{senha}">Erro senha</div>
+                        </div>
+
+                        <!-- Perfil -->
+                        <div class="mb-3">
+                            <label for="perfil" class="form-label fw-semibold">Perfil <span class="text-danger">*</span></label>
+                            <select class="form-select" id="perfil" th:field="*{perfil}"
+                                    th:classappend="${#fields.hasErrors('perfil')} ? 'is-invalid'" required="required">
+                                <option value="">Selecione...</option>
+                                <option th:each="p : ${perfis}" th:value="${p}" th:text="${p}"></option>
+                            </select>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('perfil')}" th:errors="*{perfil}">Erro perfil</div>
+                        </div>
+
+                        <!-- Ativo -->
+                        <div class="mb-4 form-check">
+                            <input type="checkbox" class="form-check-input" id="ativo" th:field="*{ativo}"/>
+                            <label class="form-check-label" for="ativo">Usuario ativo</label>
+                        </div>
+
+                        <!-- Botoes -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-pdv" id="btnSalvar">
+                                <i class="bi bi-check-lg me-1"></i>
+                                <span th:text="${acao}">Salvar</span>
+                            </button>
+                            <a th:href="@{/usuarios}" class="btn btn-outline-secondary" id="btnCancelar">
+                                <i class="bi bi-arrow-left me-1"></i>Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

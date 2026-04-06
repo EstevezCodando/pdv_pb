@@ -1,0 +1,89 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pdv-postgres
+    environment:
+      POSTGRES_DB: pdvdb
+      POSTGRES_USER: pdvuser
+      POSTGRES_PASSWORD: pdvpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pdvuser -d pdvdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  pdv-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pdv-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: pdvdb
+      DB_USERNAME: pdvuser
+      DB_PASSWORD: pdvpass
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    restart: unless-stopped
+
+  pdv-build:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: pdv-build
+    profiles: ["build"]
+    environment:
+      GRADLE_TASK: clean bootJar
+
+  pdv-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: pdv-test
+    profiles: ["test"]
+    environment:
+      GRADLE_TASK: clean test
+
+  pdv-selenium:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: pdv-selenium
+    profiles: ["selenium"]
+    environment:
+      GRADLE_TASK: seleniumTest
+
+  pdv-postdeploy-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: pdv-postdeploy-test
+    profiles: ["postdeploy"]
+    depends_on:
+      pdv-app:
+        condition: service_healthy
+    environment:
+      GRADLE_TASK: postDeployTest
+      PDV_BASE_URL: http://pdv-app:8080
+      PDV_ADMIN_USER: admin@pdv.com
+      PDV_ADMIN_PASS: admin123
+
+volumes:
+  postgres_data:

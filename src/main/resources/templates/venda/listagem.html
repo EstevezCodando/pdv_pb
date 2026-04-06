@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(titulo='Vendas', conteudo=~{::section})}">
+<body>
+<section>
+    <div th:if="${mensagemSucesso}" class="alert alert-success alert-dismissible fade show" role="alert" id="alertSucesso">
+        <i class="bi bi-check-circle me-2"></i>
+        <span th:text="${mensagemSucesso}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${mensagemErro}" class="alert alert-danger alert-dismissible fade show" role="alert" id="alertErro">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span th:text="${mensagemErro}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header d-flex justify-content-between align-items-center py-3"
+             style="background: var(--pdv-secondary);">
+            <div>
+                <h4 class="mb-0 text-white">
+                    <i class="bi bi-receipt me-2"></i>Histórico de Vendas
+                </h4>
+                <small class="text-white-50">Acompanhe as vendas registradas no sistema</small>
+            </div>
+            <a th:href="@{/vendas/nova}" class="btn btn-pdv" id="btnNova">
+                <i class="bi bi-plus-lg me-1"></i>Nova Venda
+            </a>
+        </div>
+
+        <div class="card-body p-0">
+            <div th:if="${#lists.isEmpty(vendas)}" class="text-center text-muted py-5" id="semRegistros">
+                <i class="bi bi-inbox display-4 d-block mb-3"></i>
+                Nenhuma venda registrada.
+            </div>
+
+            <div th:unless="${#lists.isEmpty(vendas)}" class="table-responsive">
+                <table class="table table-hover mb-0 align-middle" id="tabelaVendas">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Operador</th>
+                        <th>Pagamento</th>
+                        <th>Data / Hora</th>
+                        <th class="text-center">Itens</th>
+                        <th class="text-end">Total (R$)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="v : ${vendas}" th:id="'venda-' + ${v.vendaId}">
+                        <td th:text="${v.vendaId}"></td>
+                        <td th:text="${v.nomeUsuario}"></td>
+                        <td>
+                            <span class="badge text-bg-light border" th:text="${v.formaPagamento}"></span>
+                        </td>
+                        <td th:text="${#temporals.format(v.dataHora, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td class="text-center" th:text="${v.quantidadeTotalItens}"></td>
+                        <td class="text-end fw-bold"
+                            th:text="${#numbers.formatDecimal(v.valorTotal, 1, 'POINT', 2, 'COMMA')}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

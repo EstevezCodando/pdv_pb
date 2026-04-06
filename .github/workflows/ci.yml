@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'tp4/**'
+      - 'feature/**'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    name: Build, testes e cobertura
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Registrar inicio do pipeline
+        run: bash .github/scripts/registrar-etapa.sh "Iniciando pipeline CI — build, testes e analise"
+
+      - name: Configurar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.12'
+
+      - name: Registrar etapa de compilacao e testes
+        run: bash .github/scripts/registrar-etapa.sh "Compilando e executando testes automatizados"
+
+      - name: Compilar e testar
+        run: gradle clean check --stacktrace
+
+      - name: Publicar relatorio de cobertura JaCoCo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-jacoco-${{ github.run_number }}
+          path: build/reports/jacoco/test/html
+          retention-days: 30
+
+      - name: Publicar relatorio de testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-testes-${{ github.run_number }}
+          path: build/reports/tests/test
+          retention-days: 30
+
+      - name: Registrar etapa de analise SAST
+        run: bash .github/scripts/registrar-etapa.sh "Executando analise SAST com OWASP Dependency Check"
+
+      - name: Analise SAST - OWASP Dependency Check
+        # continue-on-error evita falha por indisponibilidade da base NVD (rate limit / rede)
+        continue-on-error: true
+        run: gradle dependencyCheckAnalyze --stacktrace
+
+      - name: Publicar relatorio SAST
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-sast-${{ github.run_number }}
+          path: build/reports/dependency-check-report.html
+          retention-days: 30
+
+      - name: Registrar conclusao do pipeline
+        if: always()
+        run: bash .github/scripts/registrar-etapa.sh "Pipeline CI concluido"
+
+      - name: Resumo do pipeline CI
+        if: always()
+        run: |
+          echo "## 📊 CI — Build \#${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Etapa | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build e Testes | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Cobertura mínima | 90% (JaCoCo) |" >> $GITHUB_STEP_SUMMARY
+          echo "| SAST OWASP Dependency Check | Executado |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\` — **Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY

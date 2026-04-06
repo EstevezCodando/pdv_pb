@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: layout(titulo='Inicio', conteudo=~{::section})}">
+<body>
+<section>
+    <div class="page-intro text-center text-lg-start mb-4">
+        <h1><i class="bi bi-speedometer2 me-2"></i>Painel Operacional do PDV</h1>
+        <p>Uma visao unica para acompanhar usuarios, produtos, estoque, vendas e faturamento.</p>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6 col-xl-2">
+            <div class="card metric-card">
+                <div class="metric-title">Usuarios ativos</div>
+                <div class="metric-value" th:text="${resumo.totalUsuariosAtivos}">0</div>
+                <small class="text-secondary">Total: <span th:text="${resumo.totalUsuarios}">0</span></small>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-2">
+            <div class="card metric-card">
+                <div class="metric-title">Produtos ativos</div>
+                <div class="metric-value" th:text="${resumo.totalProdutosAtivos}">0</div>
+                <small class="text-secondary">Total: <span th:text="${resumo.totalProdutos}">0</span></small>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-2">
+            <div class="card metric-card">
+                <div class="metric-title">Itens em estoque</div>
+                <div class="metric-value" th:text="${resumo.totalItensEmEstoque}">0</div>
+                <small class="text-secondary">Baixo estoque: <span th:text="${resumo.totalProdutosComEstoqueBaixo}">0</span></small>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-2">
+            <div class="card metric-card">
+                <div class="metric-title">Valor em estoque</div>
+                <div class="metric-value">R$ <span th:text="${#numbers.formatDecimal(resumo.valorTotalEstoque, 1, 'POINT', 2, 'COMMA')}">0,00</span></div>
+                <small class="text-secondary">Base atual</small>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-2">
+            <div class="card metric-card">
+                <div class="metric-title">Vendas realizadas</div>
+                <div class="metric-value" th:text="${resumo.totalVendas}">0</div>
+                <small class="text-secondary">Ticket medio: R$ <span th:text="${#numbers.formatDecimal(resumo.ticketMedio, 1, 'POINT', 2, 'COMMA')}">0,00</span></small>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-2">
+            <div class="card metric-card">
+                <div class="metric-title">Faturamento</div>
+                <div class="metric-value">R$ <span th:text="${#numbers.formatDecimal(resumo.faturamentoTotal, 1, 'POINT', 2, 'COMMA')}">0,00</span></div>
+                <small class="text-secondary">Acumulado</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4" sec:authorize="hasRole('ADMIN')">
+            <div class="card h-100 p-4 text-center text-lg-start">
+                <div class="card-body">
+                    <i class="bi bi-people-fill display-5 mb-3 d-block" style="color: var(--pdv-accent);"></i>
+                    <h2 class="h4 fw-bold">Usuarios</h2>
+                    <p class="text-secondary">Cadastre, ative ou desative perfis e mantenha o acesso do sistema sob controle.</p>
+                    <a th:href="@{/usuarios}" class="btn btn-pdv" id="btnIrUsuarios">
+                        <i class="bi bi-arrow-right me-1"></i>Acessar usuarios
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4" sec:authorize="hasRole('ADMIN')">
+            <div class="card h-100 p-4 text-center text-lg-start">
+                <div class="card-body">
+                    <i class="bi bi-box-seam-fill display-5 mb-3 d-block" style="color: var(--pdv-secondary);"></i>
+                    <h2 class="h4 fw-bold">Produtos</h2>
+                    <p class="text-secondary">Gerencie catalogo, codigos de barras e estoque com uma interface mais clara e consistente.</p>
+                    <a th:href="@{/produtos}" class="btn btn-pdv" id="btnIrProdutos">
+                        <i class="bi bi-arrow-right me-1"></i>Acessar produtos
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4" sec:authorize="hasAnyRole('ADMIN','OPERADOR')">
+            <div class="card h-100 p-4 text-center text-lg-start">
+                <div class="card-body">
+                    <i class="bi bi-receipt-cutoff display-5 mb-3 d-block" style="color: var(--pdv-success);"></i>
+                    <h2 class="h4 fw-bold">Vendas</h2>
+                    <p class="text-secondary">Registre vendas, acompanhe historico operacional e mantenha o fluxo do PDV centralizado.</p>
+                    <a th:href="@{/vendas}" class="btn btn-pdv" id="btnIrVendas">
+                        <i class="bi bi-arrow-right me-1"></i>Acessar vendas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

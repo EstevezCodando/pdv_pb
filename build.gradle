@@ -1,0 +1,220 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
+    id 'org.owasp.dependencycheck' version '10.0.3'
+}
+
+group = 'com.pdv'
+version = '1.1.0'
+
+description = 'Sistema de Ponto de Venda com interface web, integracao entre modulos e pipeline CI/CD'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+
+    runtimeOnly 'com.h2database:h2'
+    runtimeOnly 'org.postgresql:postgresql'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.seleniumhq.selenium:selenium-java:4.27.0'
+    testImplementation 'io.github.bonigarcia:webdrivermanager:5.9.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// =============================================================
+// Testes unitarios e de integracao (exclui Selenium)
+// =============================================================
+tasks.named('test') {
+    useJUnitPlatform()
+    exclude '**/*SeleniumTest.class'
+    exclude '**/*PosDeploySeleniumTest.class'
+    finalizedBy tasks.named('jacocoTestReport')
+
+    testLogging {
+        events 'failed', 'skipped'
+        exceptionFormat 'full'
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
+
+    // === CAPTURA DETALHADA DE FALHAS ===
+    def arquivoFalhas = layout.buildDirectory.file("reports/tests/falhas_detalhadas.txt").get().asFile
+    def arquivoResumo = layout.buildDirectory.file("reports/tests/resumo.txt").get().asFile
+
+    doFirst {
+        arquivoFalhas.parentFile.mkdirs()
+        arquivoFalhas.text = ""
+        arquivoResumo.text = ""
+    }
+
+    afterTest { descriptor, result ->
+        if (result.resultType == org.gradle.api.tasks.testing.TestResult.ResultType.FAILURE) {
+            arquivoFalhas << "\n============================================================\n"
+            arquivoFalhas << "TESTE FALHOU\n"
+            arquivoFalhas << "Classe   : ${descriptor.className}\n"
+            arquivoFalhas << "Metodo   : ${descriptor.name}\n"
+            arquivoFalhas << "Status   : ${result.resultType}\n"
+            arquivoFalhas << "============================================================\n"
+
+            // result.exception (singular) é a API estável do Gradle 8 e 9
+            def exc = result.exception
+            if (exc != null) {
+                arquivoFalhas << "\n[EXCECAO]\n"
+                arquivoFalhas << "Tipo     : ${exc.getClass().getName()}\n"
+                arquivoFalhas << "Mensagem : ${exc.getMessage() ?: 'Sem mensagem'}\n\n"
+                arquivoFalhas << "STACK TRACE:\n"
+                exc.printStackTrace(new PrintWriter(new FileWriter(arquivoFalhas, true)))
+                arquivoFalhas << "\n"
+            } else {
+                arquivoFalhas << "\nNenhuma excecao detalhada foi disponibilizada pelo Gradle.\n"
+            }
+        }
+    }
+
+    afterSuite { descriptor, result ->
+        if (!descriptor.parent) {
+            arquivoResumo.text = "\n================ RESUMO DOS TESTES ================\n" +
+                    "Total     : ${result.testCount}\n" +
+                    "Sucesso   : ${result.successfulTestCount}\n" +
+                    "Falhas    : ${result.failedTestCount}\n" +
+                    "Ignorados : ${result.skippedTestCount}\n\n" +
+                    "==================================================\n"
+        }
+    }
+}
+
+// =============================================================
+// Testes end-to-end com Selenium (requer aplicacao no ar)
+// =============================================================
+tasks.register('seleniumTest', Test) {
+    description = 'Executa apenas os testes end-to-end com Selenium.'
+    group = 'verification'
+    useJUnitPlatform()
+    include '**/*SeleniumTest.class'
+    // PosDeploySeleniumTest termina em SeleniumTest mas exige app externa; exclui aqui
+    exclude '**/*PosDeploySeleniumTest.class'
+    shouldRunAfter tasks.named('test')
+
+    testLogging {
+        events 'failed', 'skipped'
+        exceptionFormat 'full'
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
+}
+
+// =============================================================
+// Testes pos-deploy (aponta para aplicacao publicada)
+// =============================================================
+tasks.register('postDeployTest', Test) {
+    description = 'Executa testes pos-deploy apontando para uma aplicacao ja publicada.'
+    group = 'verification'
+    useJUnitPlatform()
+    include '**/*PosDeploySeleniumTest.class'
+    shouldRunAfter tasks.named('build')
+
+    testLogging {
+        events 'failed', 'skipped'
+        exceptionFormat 'full'
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
+}
+
+// =============================================================
+// SAST — OWASP Dependency Check
+// =============================================================
+dependencyCheck {
+    // Falha o build apenas em vulnerabilidades criticas (CVSS >= 9)
+    failBuildOnCVSS = 9
+    suppressionFile = 'dependency-check-suppressions.xml'
+    formats = ['HTML']
+    outputDirectory = 'build/reports'
+}
+
+// =============================================================
+// Cobertura de testes — JaCoCo
+// =============================================================
+jacoco {
+    toolVersion = '0.8.12'
+}
+
+// Classes excluidas da cobertura:
+//   SecurityConfig   — substituida por TestSecurityConfig no perfil de teste (Spring Security config)
+//   DataInitializer  — ativa apenas no perfil h2 (seed de dados para dev, nao logica de negocio)
+//   PontoDeVendaApplication — boilerplate do Spring Boot entry-point
+//   PerfisUsuario    — classe de constantes, sem logica testavel
+def jacocoExclusoes = [
+    '**/SecurityConfig*',
+    '**/DataInitializer*',
+    '**/PontoDeVendaApplication*',
+    '**/PerfisUsuario*'
+]
+
+jacocoTestReport {
+    dependsOn tasks.named('test')
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, excludes: jacocoExclusoes)
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, excludes: jacocoExclusoes)
+        }))
+    }
+    violationRules {
+        rule {
+            element = 'BUNDLE'
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.90
+            }
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('jacocoTestCoverageVerification')
+}

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(titulo='Nova Venda', conteudo=~{::section})}">
+<body>
+<section>
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card">
+                <div class="card-header py-3" style="background: var(--pdv-secondary);">
+                    <h4 class="mb-0 text-white">
+                        <i class="bi bi-receipt me-2"></i>Registrar Nova Venda
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+
+                    <!-- Mensagem de erro -->
+                    <div th:if="${mensagemErro}" class="alert alert-danger" role="alert" id="alertErroForm">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <span th:text="${mensagemErro}"></span>
+                    </div>
+
+                    <form th:action="@{/vendas/nova}" th:object="${novaVendaForm}"
+                          method="post" id="formVenda">
+
+                        <div class="row mb-3">
+                            <!-- Operador -->
+                            <div class="col-md-6">
+                                <label for="usuarioId" class="form-label fw-semibold">
+                                    Operador <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="usuarioId" th:field="*{usuarioId}" required>
+                                    <option value="">Selecione...</option>
+                                    <option th:each="u : ${usuarios}"
+                                            th:value="${u.id}"
+                                            th:text="${u.nome}"></option>
+                                </select>
+                            </div>
+
+                            <!-- Forma de pagamento -->
+                            <div class="col-md-6">
+                                <label for="formaPagamento" class="form-label fw-semibold">
+                                    Forma de Pagamento <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="formaPagamento" th:field="*{formaPagamento}" required>
+                                    <option value="">Selecione...</option>
+                                    <option th:each="fp : ${formasPagamento}"
+                                            th:value="${fp}"
+                                            th:text="${fp}"></option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Tabela de produtos -->
+                        <h6 class="fw-semibold mb-2">
+                            <i class="bi bi-box-seam me-1"></i>Produtos
+                            <small class="text-muted fw-normal">(informe a quantidade desejada)</small>
+                        </h6>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-hover align-middle" id="tabelaProdutos">
+                                <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th class="text-end">Preco Unit. (R$)</th>
+                                    <th style="width: 140px;">Quantidade</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="item, iter : *{itens}">
+                                    <input type="hidden"
+                                           th:field="*{itens[__${iter.index}__].produtoId}"/>
+                                    <input type="hidden"
+                                           th:field="*{itens[__${iter.index}__].nomeProduto}"/>
+                                    <input type="hidden"
+                                           th:field="*{itens[__${iter.index}__].preco}"/>
+                                    <td th:text="*{itens[__${iter.index}__].nomeProduto}"></td>
+                                    <td class="text-end"
+                                        th:text="${#numbers.formatDecimal(item.preco, 1, 'POINT', 2, 'COMMA')}"></td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm"
+                                               th:field="*{itens[__${iter.index}__].quantidade}"
+                                               min="0" placeholder="0"/>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Botoes -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-pdv" id="btnRegistrar">
+                                <i class="bi bi-check-lg me-1"></i>Registrar Venda
+                            </button>
+                            <a th:href="@{/vendas}" class="btn btn-outline-secondary" id="btnCancelar">
+                                <i class="bi bi-arrow-left me-1"></i>Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

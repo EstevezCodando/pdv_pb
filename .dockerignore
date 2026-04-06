@@ -1,0 +1,10 @@
+build
+.gradle
+.idea
+.vscode
+out
+bin
+*.iml
+*.log
+.git
+.github
