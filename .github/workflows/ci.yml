@@ -57,9 +57,17 @@ jobs:
       - name: Registrar etapa de analise SAST
         run: bash .github/scripts/registrar-etapa.sh "Executando analise SAST com OWASP Dependency Check"
 
+      - name: Cache banco OWASP Dependency Check
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/dependency-check-data
+          key: owasp-db-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            owasp-db-${{ runner.os }}-
+
       - name: Analise SAST - OWASP Dependency Check
-        # continue-on-error evita falha por indisponibilidade da base NVD (rate limit / rede)
-        # timeout-minutes garante que o job nao trave indefinidamente
+        # continue-on-error: nao bloqueia o pipeline por indisponibilidade da NVD
+        # timeout-minutes: protege contra travamento em primeira execucao sem cache
         continue-on-error: true
         timeout-minutes: 10
         env:

@@ -167,14 +167,11 @@ dependencyCheck {
     formats = ['HTML']
     outputDirectory = 'build/reports'
 
-    // Com NVD_API_KEY: usa a API moderna (rapida).
-    // Sem chave: desativa atualizacao automatica e usa dados em cache/bundled
-    // (evita travar indefinidamente por rate-limit do feed legado).
+    // Usa NVD_API_KEY quando disponivel (mais rapido).
+    // Sem chave, o banco e baixado na primeira run e reutilizado via cache do GitHub Actions.
     def nvdKey = System.getenv('NVD_API_KEY') ?: ''
     if (nvdKey) {
         nvd.apiKey = nvdKey
-    } else {
-        autoUpdate = false
     }
 }
 
