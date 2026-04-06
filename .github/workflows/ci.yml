@@ -59,7 +59,11 @@ jobs:
 
       - name: Analise SAST - OWASP Dependency Check
         # continue-on-error evita falha por indisponibilidade da base NVD (rate limit / rede)
+        # timeout-minutes garante que o job nao trave indefinidamente
         continue-on-error: true
+        timeout-minutes: 10
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: gradle dependencyCheckAnalyze --stacktrace
 
       - name: Publicar relatorio SAST

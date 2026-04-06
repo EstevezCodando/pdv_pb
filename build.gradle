@@ -162,11 +162,20 @@ tasks.register('postDeployTest', Test) {
 // SAST — OWASP Dependency Check
 // =============================================================
 dependencyCheck {
-    // Falha o build apenas em vulnerabilidades criticas (CVSS >= 9)
     failBuildOnCVSS = 9
     suppressionFile = 'dependency-check-suppressions.xml'
     formats = ['HTML']
     outputDirectory = 'build/reports'
+
+    // Com NVD_API_KEY: usa a API moderna (rapida).
+    // Sem chave: desativa atualizacao automatica e usa dados em cache/bundled
+    // (evita travar indefinidamente por rate-limit do feed legado).
+    def nvdKey = System.getenv('NVD_API_KEY') ?: ''
+    if (nvdKey) {
+        nvd.apiKey = nvdKey
+    } else {
+        autoUpdate = false
+    }
 }
 
 // =============================================================
