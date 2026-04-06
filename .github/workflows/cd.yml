@@ -111,6 +111,22 @@ jobs:
           nohup java -jar "$JAR" --spring.profiles.active=h2 --server.port=8080 > pdv-app.log 2>&1 &
           echo $! > pdv-app.pid
 
+      - name: Aguardar porta 8080 disponivel
+        if: env.DEPLOY_REMOTO == 'false'
+        shell: bash
+        run: |
+          for i in $(seq 1 24); do
+            if nc -z 127.0.0.1 8080 2>/dev/null; then
+              echo "Porta 8080 disponivel na tentativa $i — aguardando contexto Spring..."
+              sleep 8
+              exit 0
+            fi
+            echo "Tentativa $i/24 — aguardando 5s..."
+            sleep 5
+          done
+          echo "::error::Porta 8080 nao disponivel apos 2 minutos"
+          exit 1
+
       - name: Registrar etapa de testes Selenium
         run: bash .github/scripts/registrar-etapa.sh "Iniciando testes pos-deploy com Selenium"
 
