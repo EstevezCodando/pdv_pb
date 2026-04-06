@@ -107,7 +107,7 @@ jobs:
         if: env.DEPLOY_REMOTO == 'false'
         shell: bash
         run: |
-          JAR=$(ls build/libs/*.jar | head -n 1)
+          JAR=$(ls build/libs/*.jar | grep -v '\-plain\.jar' | head -n 1)
           nohup java -jar "$JAR" --spring.profiles.active=h2 --server.port=8080 > pdv-app.log 2>&1 &
           echo $! > pdv-app.pid
 

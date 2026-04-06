@@ -17,6 +17,11 @@ java {
     }
 }
 
+// Gera apenas o bootJar executavel; desabilita o plain jar nao-executavel
+jar {
+    enabled = false
+}
+
 repositories {
     mavenCentral()
 }
